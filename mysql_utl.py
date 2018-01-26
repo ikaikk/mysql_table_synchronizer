@@ -69,7 +69,7 @@ class MysqlUtil:
         params = (self.__schema, table)
         return self.query_multi(sql, params)
 
-    def update_column(self, column, modify_type, table_name):
+    def update_column(self, column, modify_type, table_name, is_execute):
         column_name = column['column_name']
         is_nullable = column['is_nullable']
         column_type = column['column_type']
@@ -80,7 +80,7 @@ class MysqlUtil:
         if 'add' == modify_type:
             sql += 'add column {column} '.format(column=column_name)
         elif 'update' == modify_type:
-            sql += 'change column {column} '.format(column=column_name)
+            sql += 'change column {column} {column} '.format(column=column_name)
         else:
             sql += 'drop column {column}'.format(column=column_name)
 
@@ -96,7 +96,9 @@ class MysqlUtil:
                 sql += 'default {default} '.format(default=column_default)
 
             if column_comment is not None:
-                sql += 'comment {comment}'.format(comment=column_comment)
+                sql += 'comment \'{comment}\''.format(comment=column_comment)
 
         print(sql)
-
+        if is_execute:
+            count = self.execute(sql)
+            print(count)
