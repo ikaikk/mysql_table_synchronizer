@@ -9,7 +9,16 @@ class CheckSQL:
         self.__mysql_util2 = MysqlUtil(db2)
 
     def check_table(self, is_execute):
+        """
+        和标准库对比检测是否缺少某些表
+        :param is_execute:
+        :return:
+        """
+
+        # 获得标准库中所有表
         source_tables = self.__mysql_util1.get_tables()
+
+        # 获得目标数据库中的所有表
         target_tables = self.__mysql_util2.get_tables()
 
         losing_tables = []
@@ -26,6 +35,14 @@ class CheckSQL:
             print(losing_tables)
 
     def check_column(self, table, is_execute):
+        """
+        和标准库中的表对比，查看某些字段是否不同，会打印这些字段，并生成修改字段的sql
+        如果is_excuse设为true，则会更新这些字段
+        :param table:
+        :param is_execute:
+        :return:
+        """
+
         losing_columns = []
         change_columns = []
 
@@ -39,12 +56,18 @@ class CheckSQL:
         for s_c in source_columns:
             # print(s_c)
             column_name = s_c['column_name']
+            # 是否缺少字段
             if column_name in target_col_names:
+                # 字段是否相同，包含类型，长度，默认值，备注
                 if s_c not in target_columns:
                     change_columns.append(column_name)
+
+                    # 更新不同的字段
                     self.__mysql_util2.update_column(s_c, 'update', table, is_execute)
             else:
                 losing_columns.append(column_name)
+
+                # 新增缺失的字段
                 self.__mysql_util2.update_column(s_c, 'add', table, is_execute)
 
         if len(losing_columns) > 0:
