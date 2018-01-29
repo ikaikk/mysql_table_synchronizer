@@ -30,10 +30,9 @@ class CheckSQL:
             if table_name in target_names:
                 self.check_column(table_name, is_execute)
             else:
-                # print('this schema does not has {0}'.format(table_name))
                 losing_tables.append(table_name)
-                source_columns = self.__mysql_util1.get_columns(table_name)
-                self.__mysql_util2.create_table(s_t, is_execute, source_columns)
+                sql = self.__mysql_util1.generate_create_sql(table_name)
+                self.__mysql_util2.create_table(sql, is_execute)
 
         if len(losing_tables) > 0:
             print('\nthis schema does not have these tables:')
@@ -81,9 +80,9 @@ class CheckSQL:
                 self.__mysql_util2.update_column(s_c, 'add', table, is_execute)
 
         if len(losing_columns) > 0:
-            print('this table {0} does not have these columns:'.format(table))
+            print('\nthis table {0} does not have these columns:'.format(table))
             print(losing_columns)
 
         if len(change_columns) > 0:
-            print('this table {0} is different from target columns:'.format(table))
+            print('\nthis table {0} is different from target columns:'.format(table))
             print(change_columns)

@@ -25,13 +25,13 @@ class MysqlUtil:
     def get_connection(self):
         return pymysql.connect(**self.__config)
 
-    def execute(self, sql):
+    def execute(self, sql, params=None):
         conn = self.get_connection()
         count = 0
 
         try:
             with conn.cursor() as cursor:
-                count = cursor.execute(sql)
+                count = cursor.execute(sql, params)
             conn.commit()
         except Exception as ex:
             conn.rollback()
@@ -63,8 +63,8 @@ class MysqlUtil:
         return self.query_multi(sql, params)
 
     def get_columns(self, table_name):
-        sql = 'select column_name, data_type, is_nullable, character_maximum_length, column_key, ' \
-              'numeric_precision, column_default, column_comment, column_type ' \
+        sql = 'select column_name, is_nullable, column_key, ' \
+              'column_default, column_comment, column_type ' \
               'from information_schema.columns where table_schema = %s and table_name = %s'
         params = (self.__schema, table_name)
         return self.query_multi(sql, params)
@@ -100,49 +100,15 @@ class MysqlUtil:
 
         print(sql)
         if is_execute:
-            count = self.execute(sql)
-            print(count)
+            self.execute(sql)
 
-    def create_table(self, table, is_execute, source_columns):
-        sql = 'create table {table_name} ( '.format(table_name=table['table_name'])
+    def generate_create_sql(self, table_name):
+        sql = 'show create table {0}'.format(table_name)
+        result = self.query_one(sql)
+        return result['Create Table']
 
-        pri_key = []
-        for col in source_columns:
-            if 'PRI' == col['column_key']:
-                pri_key.append(col['column_name'])
-            sql += '{column_name} '.format(column_name=col['column_name'])
-            sql += '{column_type} '.format(column_type=col['column_type'])
-
-            if 'YES' == col['is_nullable']:
-                sql += 'null '
-            else:
-                sql += 'not null '
-
-            column_default = col['column_default']
-            column_comment = col['column_comment']
-            if column_default is not None:
-                sql += 'default {default} '.format(default=column_default)
-
-            if column_comment is not None and '' != column_comment:
-                sql += 'comment \'{comment}\''.format(comment=column_comment)
-            sql += ','
-        sql = sql[:-1]
-
-        if len(pri_key) > 0:
-            sql += ', primary key('
-            for k in pri_key:
-                sql += k + ','
-            sql = sql[:-1]
-            sql += ')'
-        sql += ') '
-
-        sql += 'engine = {engine} '.format(engine=table['engine'])
-        # sql += 'default character set = {ch_set}'.format(ch_set=table['table_collation'])
-        if table['table_comment'] is not None:
-            sql += ' comment = \'{comment}\''.format(comment=table['table_comment'])
-
+    def create_table(self, sql, is_execute):
         print(sql)
+        print('\n')
         if is_execute:
-            count = self.execute(sql)
-            print(count)
-
+            self.execute(sql)
