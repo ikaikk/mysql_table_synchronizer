@@ -57,16 +57,16 @@ class MysqlUtil:
         return result
 
     def get_tables(self):
-        sql = 'select table_name from information_schema.tables where ' \
+        sql = 'select table_name, engine, table_collation, table_comment from information_schema.tables where ' \
               'table_schema = %s and table_type = \'{0}\''.format('BASE TABLE')
         params = self.__schema
         return self.query_multi(sql, params)
 
-    def get_columns(self, table):
-        sql = 'select column_name, data_type, is_nullable, character_maximum_length, ' \
+    def get_columns(self, table_name):
+        sql = 'select column_name, data_type, is_nullable, character_maximum_length, column_key, ' \
               'numeric_precision, column_default, column_comment, column_type ' \
               'from information_schema.columns where table_schema = %s and table_name = %s'
-        params = (self.__schema, table)
+        params = (self.__schema, table_name)
         return self.query_multi(sql, params)
 
     def update_column(self, column, modify_type, table_name, is_execute):
@@ -102,3 +102,47 @@ class MysqlUtil:
         if is_execute:
             count = self.execute(sql)
             print(count)
+
+    def create_table(self, table, is_execute, source_columns):
+        sql = 'create table {table_name} ( '.format(table_name=table['table_name'])
+
+        pri_key = []
+        for col in source_columns:
+            if 'PRI' == col['column_key']:
+                pri_key.append(col['column_name'])
+            sql += '{column_name} '.format(column_name=col['column_name'])
+            sql += '{column_type} '.format(column_type=col['column_type'])
+
+            if 'YES' == col['is_nullable']:
+                sql += 'null '
+            else:
+                sql += 'not null '
+
+            column_default = col['column_default']
+            column_comment = col['column_comment']
+            if column_default is not None:
+                sql += 'default {default} '.format(default=column_default)
+
+            if column_comment is not None and '' != column_comment:
+                sql += 'comment \'{comment}\''.format(comment=column_comment)
+            sql += ','
+        sql = sql[:-1]
+
+        if len(pri_key) > 0:
+            sql += ', primary key('
+            for k in pri_key:
+                sql += k + ','
+            sql = sql[:-1]
+            sql += ')'
+        sql += ') '
+
+        sql += 'engine = {engine} '.format(engine=table['engine'])
+        # sql += 'default character set = {ch_set}'.format(ch_set=table['table_collation'])
+        if table['table_comment'] is not None:
+            sql += ' comment = \'{comment}\''.format(comment=table['table_comment'])
+
+        print(sql)
+        if is_execute:
+            count = self.execute(sql)
+            print(count)
+

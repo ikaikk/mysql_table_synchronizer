@@ -20,15 +20,20 @@ class CheckSQL:
 
         # 获得目标数据库中的所有表
         target_tables = self.__mysql_util2.get_tables()
+        target_names = []
+        for t_t in target_tables:
+            target_names.append(t_t['table_name'])
 
         losing_tables = []
         for s_t in source_tables:
             table_name = s_t['table_name']
-            if s_t in target_tables:
+            if table_name in target_names:
                 self.check_column(table_name, is_execute)
             else:
                 # print('this schema does not has {0}'.format(table_name))
                 losing_tables.append(table_name)
+                source_columns = self.__mysql_util1.get_columns(table_name)
+                self.__mysql_util2.create_table(s_t, is_execute, source_columns)
 
         if len(losing_tables) > 0:
             print('\nthis schema does not have these tables:')
@@ -61,6 +66,11 @@ class CheckSQL:
                 # 字段是否相同，包含类型，长度，默认值，备注
                 if s_c not in target_columns:
                     change_columns.append(column_name)
+
+                    for d_t in target_columns:
+                        if s_c['column_name'] == d_t['column_name']:
+                            print(s_c)
+                            print(d_t)
 
                     # 更新不同的字段
                     self.__mysql_util2.update_column(s_c, 'update', table, is_execute)
