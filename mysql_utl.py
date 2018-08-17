@@ -98,7 +98,7 @@ class MysqlUtil:
             if column_comment is not None:
                 sql += 'comment \'{comment}\''.format(comment=column_comment)
 
-        print(sql)
+        print(sql + ";")
         if is_execute:
             self.execute(sql)
 
@@ -108,7 +108,7 @@ class MysqlUtil:
         return result['Create Table']
 
     def create_table(self, sql, is_execute):
-        print(sql)
+        print(sql + ";")
         print('\n')
         if is_execute:
             self.execute(sql)

@@ -68,7 +68,9 @@ class CheckSQL:
 
                     for d_t in target_columns:
                         if s_c['column_name'] == d_t['column_name']:
+                            print("# ", end="")
                             print(s_c)
+                            print("# ", end="")
                             print(d_t)
 
                     # 更新不同的字段
@@ -80,9 +82,9 @@ class CheckSQL:
                 self.__mysql_util2.update_column(s_c, 'add', table, is_execute)
 
         if len(losing_columns) > 0:
-            print('\nthis table {0} does not have these columns:'.format(table))
-            print(losing_columns)
+            print('\n# this table {0} does not have these columns:'.format(table))
+            print("# " + str(losing_columns))
 
         if len(change_columns) > 0:
-            print('\nthis table {0} is different from target columns:'.format(table))
-            print(change_columns)
+            print('\n# this table {0} is different from target columns:'.format(table))
+            print("# " + str(change_columns))
