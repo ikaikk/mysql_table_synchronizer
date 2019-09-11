@@ -93,10 +93,20 @@ class MysqlUtil:
                 sql += 'not null '
 
             if column_default is not None:
-                sql += 'default {default} '.format(default=column_default)
+                if len(column_default) > 0:
+                    sql += 'default {default} '.format(default=column_default)
+                elif column_default.isspace():
+                    sql += 'default \' \' '
+                elif len(column_default) < 1:
+                    sql += 'default \'\' '
 
             if column_comment is not None:
-                sql += 'comment \'{comment}\''.format(comment=column_comment)
+                if len(column_comment) > 0:
+                    sql += 'comment {comment} '.format(comment=column_comment)
+                elif column_comment.isspace():
+                    sql += 'comment \' \' '
+                elif len(column_comment) < 1:
+                    sql += 'comment \'\' '
 
         print(sql + ";")
         if is_execute:
